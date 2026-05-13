@@ -139,4 +139,9 @@ def build_model(args, num_classes=11003):
     model = RDE(args, num_classes)
     # covert model to fp16
     convert_weights(model)
+    # keep classifier in fp32 to match i_feats.float() dtype
+    if hasattr(model, 'classifier') and model.classifier is not None:
+        model.classifier.weight.data = model.classifier.weight.data.float()
+        if model.classifier.bias is not None:
+            model.classifier.bias.data = model.classifier.bias.data.float()
     return model
