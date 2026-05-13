@@ -1,0 +1,10 @@
+# 数据集文件夹
+CUHK-PEDES/
+CUHK-PEDES_extracted/
+ICFG-PEDES/
+RSTPReid/
+
+# 编辑器/工具配置
+.claude/
+.vscode/
+

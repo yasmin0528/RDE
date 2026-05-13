@@ -159,10 +159,9 @@ def get_loss(model, data_loader):
     prob_B = prob_B[:, gmm_B.means_.argmin()]
  
  
-    pred_A = split_prob(prob_A, 0.5)
-    pred_B = split_prob(prob_B, 0.5)
-  
-    return torch.Tensor(pred_A), torch.Tensor(pred_B)
+    # Return continuous probabilities instead of hard labels
+    # (Soft Label Consensus: preserves uncertainty information)
+    return torch.Tensor(prob_A), torch.Tensor(prob_B)
 
 
 
@@ -207,12 +206,10 @@ def do_train(start_epoch, args, model, train_loader, evaluator, optimizer,
         # pred_A, pred_B  =  torch.ones(data_size), torch.ones(data_size)
     
         pred_A, pred_B = get_loss(model, train_loader)
-    
-        consensus_division = pred_A + pred_B # 0,1,2 
-        consensus_division[consensus_division==1] += torch.randint(0, 2, size=(((consensus_division==1)+0).sum(),))
-        label_hat = consensus_division.clone()
-        label_hat[consensus_division>1] = 1
-        label_hat[consensus_division<=1] = 0 
+
+        # Soft Label Consensus: average clean probabilities from BGE and TSE streams
+        # label_hat ∈ [0, 1] — continuous clean confidence instead of hard 0/1
+        label_hat = (pred_A + pred_B) / 2
         
         model.train() 
         for n_iter, batch in enumerate(train_loader):

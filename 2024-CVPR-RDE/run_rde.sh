@@ -1,5 +1,5 @@
 #!/bin/bash
-root_dir=/home/qinyang/projects/data
+root_dir=/root/autodl-tmp/data
 tau=0.015 
 margin=0.1
 noisy_rate=0.0  #0.0 0.2 0.5 0.8
@@ -20,7 +20,7 @@ CUDA_VISIBLE_DEVICES=0 \
     --select_ratio $select_ratio \
     --tau $tau \
     --root_dir $root_dir \
-    --output_dir run_logs \
+    --output_dir /root/autodl-tmp/run_logs \
     --margin $margin \
     --dataset_name $DATASET_NAME \
     --loss_names ${loss}+sr${select_ratio}_tau${tau}_margin${margin}_n${noisy_rate}  \

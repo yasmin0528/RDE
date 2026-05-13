@@ -36,6 +36,8 @@ def build_transforms(img_size=(384, 128), aug=False, is_train=True):
         transform = T.Compose([
             T.Resize((height, width)),
             T.RandomHorizontalFlip(0.5),
+            T.ColorJitter(brightness=0.2, contrast=0.15, saturation=0.05, hue=0.05),
+            T.RandomGrayscale(p=0.1),
             T.Pad(10),
             T.RandomCrop((height, width)),
             T.ToTensor(),

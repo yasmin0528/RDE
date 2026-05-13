@@ -39,11 +39,28 @@ class RDE(nn.Module):
         else:
             exit()
         self.loss_type = loss_type
- 
+        # ID classification head
+        self.id_loss_weight = self._get_id_loss_weight(args)
+        if self.id_loss_weight > 0:
+            self.classifier = nn.Linear(self.embed_dim, num_classes)
+
     def _set_task(self):
         loss_names = self.args.loss_names
         self.current_task = [l.strip() for l in loss_names.split('+')]
         print(f'Training Model with {self.current_task} tasks')
+
+    @staticmethod
+    def _get_id_loss_weight(args):
+        """Get ID loss weight from loss_names string (e.g., 'TAL+id0.5' means weight=0.5)"""
+        loss_names = args.loss_names
+        for item in loss_names.split('+'):
+            item = item.strip()
+            if item.startswith('id'):
+                try:
+                    return float(item[2:])
+                except ValueError:
+                    return 1.0
+        return 0.0  # disabled by default
     
     def encode_image(self, image):
         x, _ = self.base_model.encode_image(image)
@@ -108,7 +125,13 @@ class RDE(nn.Module):
                                                 loss_type=self.loss_type,logit_scale=self.logit_scale)
         ret.update({'bge_loss':loss1})
         ret.update({'tse_loss':loss2})
-  
+
+        # ID classification loss (image features only — identity is always correct)
+        if self.id_loss_weight > 0 and 'pids' in batch:
+            id_logits = self.classifier(i_feats.detach())  # detach to avoid interfering with TAL
+            id_loss = F.cross_entropy(id_logits, batch['pids'])
+            ret.update({'id_loss': self.id_loss_weight * id_loss})
+
         return ret
 
 

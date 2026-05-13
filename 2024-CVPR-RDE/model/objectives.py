@@ -81,12 +81,19 @@ def compute_TAL_per(scores, pid, tau, margin):
 
 def compute_rbs(i_feats, t_feats, i_tse_f, t_tse_f, pid, label_hat=None, tau=0.02, margin=0.1, loss_type='TAL', logit_scale=50):
 
-    loss_bgm, _ = compute_per_loss(i_feats, t_feats, pid, tau, margin, loss_type, logit_scale)
-    loss_tse, _ = compute_per_loss(i_tse_f, t_tse_f, pid, tau, margin, loss_type, logit_scale)
+    # Adaptive margin: clean samples (label_hat≈1) get full margin,
+    # noisy samples (label_hat≈0) get reduced margin for softer constraint
+    if label_hat is not None:
+        adaptive_margin = margin * (0.5 + 0.5 * label_hat)
+    else:
+        adaptive_margin = margin
+
+    loss_bgm, _ = compute_per_loss(i_feats, t_feats, pid, tau, adaptive_margin, loss_type, logit_scale)
+    loss_tse, _ = compute_per_loss(i_tse_f, t_tse_f, pid, tau, adaptive_margin, loss_type, logit_scale)
 
     loss_bgm = (label_hat*loss_bgm).sum()
     loss_tse = (label_hat*loss_tse).sum()
-    
+
     if loss_type in ['TAL','TRL']:
         return loss_bgm, loss_tse
     else:
