@@ -126,9 +126,10 @@ class RDE(nn.Module):
         ret.update({'bge_loss':loss1})
         ret.update({'tse_loss':loss2})
 
-        # ID classification loss (image features only — identity is always correct)
+        # ID classification loss — gradients flow back to visual backbone
+        # to learn more identity-discriminative features
         if self.id_loss_weight > 0 and 'pids' in batch:
-            id_logits = self.classifier(i_feats.detach())  # detach to avoid interfering with TAL
+            id_logits = self.classifier(i_feats)
             id_loss = F.cross_entropy(id_logits, batch['pids'])
             ret.update({'id_loss': self.id_loss_weight * id_loss})
 
