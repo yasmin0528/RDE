@@ -3,7 +3,7 @@ from model import objectives
 from .CrossEmbeddingLayer_tse import TexualEmbeddingLayer, VisualEmbeddingLayer
 from .clip_model import build_CLIP_from_openai_pretrained, convert_weights
 import torch
-import torch.nn as nn
+import torch.nn as nn 
 import torch.nn.functional as F
 
 def l2norm(X, dim=-1, eps=1e-8):
@@ -17,6 +17,7 @@ class RDE(nn.Module):
     def __init__(self, args, num_classes=11003):
         super().__init__()
         self.args = args
+        self.num_classes = num_classes
         self._set_task()
 
         self.base_model, base_cfg = build_CLIP_from_openai_pretrained(args.pretrain_choice, args.img_size, args.stride_size)
@@ -38,8 +39,7 @@ class RDE(nn.Module):
         else:
             exit()
         self.loss_type = loss_type
-
-        # ID classification head (on detached BGE features)
+        # ID classification head
         self.id_loss_weight = self._get_id_loss_weight(args)
         if self.id_loss_weight > 0:
             self.classifier = nn.Linear(self.embed_dim, num_classes)
@@ -61,7 +61,7 @@ class RDE(nn.Module):
                 except ValueError:
                     return 1.0
         return 0.0  # disabled by default
-
+    
     def encode_image(self, image):
         x, _ = self.base_model.encode_image(image)
         return x[:, 0, :].float()
@@ -126,9 +126,9 @@ class RDE(nn.Module):
         ret.update({'bge_loss':loss1})
         ret.update({'tse_loss':loss2})
 
-        # ID classification loss (on detached features — no interference with TAL)
+        # ID classification loss (image features only — identity is always correct)
         if self.id_loss_weight > 0 and 'pids' in batch:
-            id_logits = self.classifier(i_feats.detach())
+            id_logits = self.classifier(i_feats.detach())  # detach to avoid interfering with TAL
             id_loss = F.cross_entropy(id_logits, batch['pids'])
             ret.update({'id_loss': self.id_loss_weight * id_loss})
 
