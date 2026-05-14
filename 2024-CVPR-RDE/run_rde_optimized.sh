@@ -1,11 +1,10 @@
 #!/bin/bash
 # =============================================================
-# Optimized training script for RSTPReid dataset
-# Improvements compared to baseline:
-#   1. ID Classification Loss (cross-entropy on BGE features)
-#   2. Adaptive Margin for TAL (clean higher margin, noisy lower)
-#   3. Stronger Image Augmentation (ColorJitter + RandomGrayscale)
-#   4. Soft Label Consensus (continuous GMM probabilities)
+# Optimized training script
+# Improvements over baseline:
+#   1. ID Classification Loss (cross-entropy on detached BGE features)
+#   2. Adaptive Margin for TAL (clean: full margin, noisy: reduced)
+#   3. Soft Label Consensus (continuous GMM prob. instead of hard 0/1)
 # =============================================================
 
 # === Path Config ===
@@ -47,5 +46,3 @@ CUDA_VISIBLE_DEVICES=0 \
     --loss_names "$LOSS_STR" \
     --num_epoch 60 \
     --sampler random
-
-
